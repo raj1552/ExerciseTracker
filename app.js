@@ -9,21 +9,26 @@ app.use(cors())
 app.use(express.static('public'))
 
 app.get('/', (req, res) => {
+
   res.sendFile(__dirname + '/views/index.html')
 });
 
 function generateUniqueId() {
+
   return Math.floor(Math.random() * 10000)
 }
 
 const Users = []
+const Exercises =[]
 
 app.post('/api/users', (req, res) => {
+
   const { username } = req.body;
 
-  const _id = generateUniqueId()
+  const _id = Number(generateUniqueId())
 
   const newusers = { _id, username }
+
   Users.push(newusers)
 
   res.json(newusers)
@@ -31,57 +36,86 @@ app.post('/api/users', (req, res) => {
 })
 
 app.get('/api/users', (req, res) => {
-  res.json(Users)
+
+    res.json(Users)
 })
+
 
 app.post('/api/users/:_id/exercises', (req, res) => {
 
   const { _id } = req.params;
   const { description, duration, date } = req.body;
 
-  const user = Users.find((user) => user._id === Number(_id)); 
+  let user = Users.find((user) => user._id === Number(_id)); 
 
   if (!user) {
-    return res.json({ error: 'User not found' });
+     return res.json({ error: 'User not found' });
   }
 
-  if (date === " ") {
-   return date = new Date().toISOString().substring(0, 10);
+  let exerciseDate;
+
+  if (date === undefined) {
+      exerciseDate= new Date().toDateString();
+  }
+  else{
+      exerciseDate = new Date(date).toDateString()
   }
 
   const exercise = {
-    description: String(description),
-    duration: Number(duration),
-    date: new Date(date).toDateString(),
+      description: String(description),
+      duration: Number(duration),
+      date: exerciseDate
   };
 
-  if (!user.exercises) {
-    user.exercises = [];
-  }
+  Exercises.push(exercise);
 
-  user.exercises.push(exercise);
+  res.json({
+     username : user.username,
+     description : description,
+     duration : duration , 
+     date : exerciseDate,
+     _id : user._id
+  });
 
-  res.json(user);
 });
 
 app.get('/api/users/:_id/exercises', (req, res) => {
+
   const {_id} = req.params;
-  const user = Users.find((user) => user._id === _id)
+  
+  const user = Users.find((user) => user._id === Number(_id))
   
   if(!user){
-    res.json({error: "User not found"})
+      return res.json({error: "User not found"})
   }
 
-  if (!user.exercises) {
-    return res.json({ username: user.username, log: [] });
+  const userExercise = Exercises[user]
+
+  res.json({ username: user.username, log: userExercise });
+})
+
+
+app.get('/api/users/:_id/logs' , (req , res) =>{
+
+  const { _id } = req.params;
+
+  const user = Users.find((user) => user._id === Number(_id));
+
+  if(!user){
+       return res.json({error : "User not found"})
   }
 
-  res.json({ username: user.username, log: user.exercises });
+  const userExercise = Exercises[user]
+  res.json({
+      username : user.username,
+      count : Exercises.length ,
+      _id : user._id,
+      log: userExercise
+  })
 })
 
 
 
-
-const listener = app.listen(process.env.PORT || 4000, () => {
+const listener = app.listen(process.env.PORT || 7777, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
