@@ -21,22 +21,31 @@ function generateUniqueId() {
   return Math.floor(Math.random() * 10000)
 }
 
+
 const Users = [
   {
     username: "abcd",
-    _id: 1
+    _id: "1"
   }
 ]
 
+const Exercise = []
+
+
 app.get('/api/users', (req, res) => {
-  res.send(Users)
+  
+  res.json(Users.map(u => ({ _id: u._id, username: u.username })))
 })
 
 app.post('/api/users', (req, res) => {
 
   const { username } = req.body;
 
-  const _id = Number(generateUniqueId())
+  const _id = String(generateUniqueId())
+
+  if (!username) {
+    return res.json({ error: "username is required" })
+  }
 
   const newusers = { _id, username }
 
@@ -49,6 +58,8 @@ app.post('/api/users', (req, res) => {
 
 })
 
+
+
 app.post('/api/users/:_id/exercises', (req, res) => {
 
   const { _id } = req.params;
@@ -56,7 +67,7 @@ app.post('/api/users/:_id/exercises', (req, res) => {
   const duration = req.body.duration;
   let date = new Date(req.body.date).toDateString();
 
-  let user = Users.find((user) => user._id === Number(_id));
+  let user = Users.find((user) => user._id === _id);
 
   if (!description || !duration) {
     return res.json({ error: 'Description and duration are required' });
@@ -98,7 +109,7 @@ app.get('/api/users/:_id/exercises', (req, res) => {
 
   const { _id } = req.params;
 
-  const user = Users.find((user) => user._id === Number(_id))
+  const user = Users.find((user) => user._id === _id)
 
   if (!user) {
     return res.json({ error: "User not found" })
@@ -108,17 +119,25 @@ app.get('/api/users/:_id/exercises', (req, res) => {
 })
 
 app.get('/api/users/:_id/logs', (req, res) => {
-
   const { _id } = req.params;
   const from = req.query.from;
   const to = req.query.to;
   const limit = parseInt(req.query.limit);
 
-  const user = Users.find((user) => user._id === Number(_id));
+  const user = Users.find((user) => user._id === _id);
 
   if (!user) {
     return res.json({ error: "User not found" });
 
+  }
+
+  if (!user.log || user.log.length === 0) {
+    return res.json({
+      username: user.username,
+      count: 0,
+      _id: user._id,
+      log: [],
+    });
   }
 
   let filteredLogs = user.log;
@@ -140,7 +159,5 @@ app.get('/api/users/:_id/logs', (req, res) => {
     _id: user._id,
     log: filteredLogs,
   });
-
 });
-
 
