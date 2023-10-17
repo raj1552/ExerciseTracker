@@ -58,12 +58,8 @@ app.post('/api/users/:_id/exercises', (req, res) => {
 
   let user = Users.find((user) => user._id === Number(_id));
 
-  if (!description) {
-    return res.json({ description: "Error" })
-  }
-
-  if (!duration) {
-    return res.json({ duration: "Error" })
+  if (!description || !duration) {
+    return res.json({ error: 'Description and duration are required' });
   }
 
   if (!user) {
@@ -85,8 +81,16 @@ app.post('/api/users/:_id/exercises', (req, res) => {
   }
 
   user.log.push(exercise)
+  Exercise.push(exercise)
 
-  res.json(user);
+  res.json({
+    username: user.username,
+    description: exercise.description,
+    duration: exercise.duration,
+    date: exercise.date,
+    _id: user._id
+
+  });
 
 });
 
